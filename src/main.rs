@@ -1,3 +1,4 @@
+use std::io::prelude::*;
 use std::{fs, io, path::Path};
 
 fn handle_path(path: &Path) {
@@ -46,6 +47,9 @@ fn handle_path(path: &Path) {
 
 fn main() {
     // Read the path from standard input
+    println!("Change your .js => .jsx");
+    io::stdout().flush().ok().expect("Could not flush stdout");
+    println!("Enter the path:");
     let mut path_name = String::new();
     io::stdin()
         .read_line(&mut path_name)
