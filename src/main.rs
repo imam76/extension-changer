@@ -1,29 +1,61 @@
-use rand::Rng;
-use std::cmp::Ordering;
-use std::io;
+use std::{fs, io, path::Path};
+
+fn handle_path(path: &Path) {
+    if path.is_dir() {
+        println!("Path Valid:");
+        if let Ok(entries) = fs::read_dir(path) {
+            for entry in entries {
+                match entry {
+                    Ok(item) => {
+                        let item_path = item.path();
+                        // Print the type of the item (directory, file, or unknown)
+                        if item_path.is_dir() {
+                            println!("Directory: {}", item_path.display());
+                            handle_path(&item_path); // Recursively handle subdirectories
+                        } else if item_path.is_file() {
+                            println!("File---------: {}", item_path.display());
+
+                            // Cek apakah file memiliki ekstensi .js
+                            if item_path.extension().and_then(|e| e.to_str()) == Some("js") {
+                                let mut new_item_path = item_path.clone();
+                                new_item_path.set_extension("jsx");
+
+                                match fs::rename(&item_path, &new_item_path) {
+                                    Ok(_) => println!(
+                                        "Renamed From {:?} to {:?}",
+                                        item_path.display(),
+                                        new_item_path.display()
+                                    ),
+                                    Err(e) => eprintln!("Error renaming file: {}", e),
+                                }
+                            }
+                        } else {
+                            println!("Unknown: {}", item_path.display());
+                        }
+                    }
+                    Err(e) => eprintln!("Error reading entry: {}", e),
+                }
+            }
+        } else {
+            eprintln!("Failed to read the directory contents");
+        }
+    } else {
+        println!("Directory not found");
+    }
+}
 
 fn main() {
-    println!("Guest The Number");
-    let secret_number: i32 = rand::thread_rng().gen_range(1..=100);
-    loop {
-        let mut guess: String = String::new();
+    // Read the path from standard input
+    let mut path_name = String::new();
+    io::stdin()
+        .read_line(&mut path_name)
+        .expect("Failed to read line");
 
-        println!("Please input your guess.");
-        io::stdin().read_line(&mut guess).expect("failed read line");
+    // Trim the input path
+    let path_name = path_name.trim();
 
-        let guess: i32 = match guess.trim().parse() {
-            Ok(number) => number,
-            Err(_) => continue,
-        };
+    // Create a Path from the input string
+    let path = Path::new(path_name);
 
-        match guess.cmp(&secret_number) {
-            Ordering::Greater => println!("Too big!"),
-            Ordering::Less => println!("Too small!"),
-            Ordering::Equal => {
-                println!("You win!");
-                break;
-            }
-        }
-        println!("you guessed: {guess}");
-    }
+    handle_path(path);
 }
